@@ -26,8 +26,12 @@ app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
 
 // Connect to the Mongo DB
-var databaseURI = process.env.MONGODB_URI || "mongodb://localhost/scraperdb";
-mongoose.connect(databaseURI);
+// var databaseURI = process.env.MONGODB_URI || "mongodb://localhost/scraperdb";
+// mongoose.connect(databaseURI);
+
+// Heroku w/ MlabDB
+var MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/scraperdb";
+mongoose.connect(MONGODB_URI);
 
 app.get("/", function(req, res) {
   db.Article.find({ saved: false }).then(function(allArticles) {
