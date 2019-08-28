@@ -22,58 +22,51 @@ app.use(express.json());
 app.use(express.static("public"));
 
 var exphbs = require("express-handlebars");
-app.engine("handlebars", exphbs({defaultLayout:"main"}));
+app.engine("handlebars", exphbs({ defaultLayout: "main" }));
 app.set("view engine", "handlebars");
 
 // Connect to the Mongo DB
-var databaseURI = process.env.MONGODB_URI || "mongodb://localhost/scraperdb"
+var databaseURI = process.env.MONGODB_URI || "mongodb://localhost/scraperdb";
 mongoose.connect(databaseURI);
 
 app.get("/", function(req, res) {
-    db.Article.find({saved:false})
-    .then(function(allArticles){
-        res.render("home", {articles:allArticles})
-    })
+  db.Article.find({ saved: false }).then(function(allArticles) {
+    res.render("home", { articles: allArticles });
+  });
 });
 
 app.get("/saved", function(req, res) {
-    db.Article.find({saved:true})
-    .then(function(allArticles){
-        res.render("saved", {articles:allArticles})
-    })
+  db.Article.find({ saved: true }).then(function(allArticles) {
+    res.render("saved", { articles: allArticles });
+  });
 });
 
 app.get("/api/scrape", function(req, res) {
+  axios.get("http://www.echojs.com/").then(function(response) {
+    var $ = cheerio.load(response.data);
 
-    axios.get("http://www.echojs.com/").then(function(response) {
+    $("article h2").each(function(i, element) {
+      var result = {};
 
-        var $ = cheerio.load(response.data);
+      result.title = $(this)
+        .children("a")
+        .text();
+      result.link = $(this)
+        .children("a")
+        .attr("href");
 
-        $("article h2").each(function(i, element) {
-
-            var result = {};
-
-            result.title = $(this)
-            .children("a")
-            .text();
-            result.link = $(this)
-            .children("a")
-            .attr("href");
-        
-            db.Article.create(result)
-                .then(function(dbArticle) {
-                    console.log(dbArticle);
-                })
-                .catch(function(err) {
-                    console.log(err);
-                });
-            console.log(result);
-            // console.log(element.children);
-           
+      db.Article.create(result)
+        .then(function(dbArticle) {
+          console.log(dbArticle);
+        })
+        .catch(function(err) {
+          console.log(err);
         });
-        res.json("Scrape Completed");
-       
+      console.log(result);
+      console.log(element.children);
     });
+    res.json("Scrape Completed");
+  });
 });
 
 // app.get("/articles", function(req, res) {
@@ -113,6 +106,5 @@ app.get("/api/scrape", function(req, res) {
 
 // Start the server
 app.listen(PORT, function() {
-    console.log("App running on port " + PORT + "!");
-  });
-  
+  console.log("App running on port " + PORT + "!");
+});
